@@ -4,9 +4,9 @@ This package is the implementation of a fully adaptive trust-region method for f
 ## One-time setup
 Install Julia 1.6.0 or later. From the root directory of the repository, run:
 
-'''console
-$ julia --project=scripts -e \'import Pkg; Pkg.instantiate()\'
-'''
+```console
+$ julia --project=scripts -e 'import Pkg; Pkg.instantiate()'
+```
 
 Validate setup by running the unit tests:
 
@@ -43,13 +43,13 @@ solve_cutest.jl
 
 To see the meaning of each argument:
 
-```console
+```shell
 $ julia --project=scripts scripts/solve_cutest.jl --help
 ```
 
 Here is a simple example:
 
-```console
+```shell
 $ julia --project=scripts scripts/solve_cutest.jl --output_dir ./scripts/benchmark/results default_problems true --solver FLAT
 ```
 
@@ -57,18 +57,18 @@ $ julia --project=scripts scripts/solve_cutest.jl --output_dir ./scripts/benchma
 
 To test our solver on the complexity hard example from Cartis et.al paper "On the complexity of steepest descent, newton’s and regularized newton’s methods for nonconvex unconstrained optimization problems", please use the script:
 
-```julia
+```shell
 solve_hard_example.jl
 ```
 
 To see the meaning of each argument:
 
-```console
+```shell
 $ julia --project=scripts scripts/solve_hard_example.jl --help
 ```
 
 Here is a simple example:
 
-```console
+```shell
 $ julia --project=scripts scripts/solve_hard_example.jl --output_dir ./scripts --tol_opt 1e-3 --r_1 1.5
 ```
