@@ -7,9 +7,9 @@ Defines parses and args.
 A dictionary with the values of the command-line arguments.
 """
 
-function if_mkdir(dir::String)
+function if_mkpath(dir::String)
   if !isdir(dir)
-     mkdir(dir)
+     mkpath(dir)
   end
 end
 
@@ -95,7 +95,7 @@ function main()
   parsed_args = parse_command_line()
 
   folder_name = parsed_args["output_dir"]
-  if_mkdir("$folder_name")
+  if_mkpath("$folder_name")
   default_problems = parsed_args["default_problems"]
   min_nvar = 0
   max_nvar = 0

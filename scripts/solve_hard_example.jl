@@ -7,9 +7,9 @@ Defines parses and args.
 A dictionary with the values of the command-line arguments.
 """
 
-function if_mkdir(dir::String)
+function if_mkpath(dir::String)
   if !isdir(dir)
-     mkdir(dir)
+     mkpath(dir)
   end
 end
 
@@ -60,7 +60,7 @@ function main()
   tol_opt = parsed_args["tol_opt"]
   θ = parsed_args["θ"]
   r_1 = parsed_args["r_1"]
-  if_mkdir("$folder_name")
+  if_mkpath("$folder_name")
 
   solveHardComplexityExample(folder_name, max_it, max_time, tol_opt, θ, r_1)
 end

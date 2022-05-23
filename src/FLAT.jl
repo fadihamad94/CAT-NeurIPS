@@ -5,7 +5,7 @@ using NLPModels, LinearAlgebra, DataFrames, SparseArrays
 include("./trust_region_subproblem_solver.jl")
 
 export Problem_Data
-export phi, findinterval, bisection, restoreFullMatrix, computeSecondOrderModel, optimizeSecondOrderModel, compute_ρ, SOAT
+export phi, findinterval, bisection, restoreFullMatrix, computeSecondOrderModel, optimizeSecondOrderModel, compute_ρ, FLAT
 
 mutable struct Problem_Data
     nlp::AbstractNLPModel

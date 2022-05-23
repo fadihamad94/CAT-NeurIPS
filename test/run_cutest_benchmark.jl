@@ -100,7 +100,7 @@ function runModelFromProblem(
 		if optimization_method == optimization_method_flat || optimization_method == optimization_method_flat_theta_0
 			problem = fully_adaptive_trust_region_method.Problem_Data(nlp, β, θ, ω, r_1, max_it, tol_opt, max_time, γ_2)
 	        x_1 = problem.nlp.meta.x0
-	        x, status, iteration_stats, computation_stats, total_iterations_count = fully_adaptive_trust_region_method.SOAT(problem, x_1, δ)
+	        x, status, iteration_stats, computation_stats, total_iterations_count = fully_adaptive_trust_region_method.FLAT(problem, x_1, δ)
 			function_value = NaN
 			gradient_value = NaN
 			if size(last(iteration_stats, 1))[1] > 0

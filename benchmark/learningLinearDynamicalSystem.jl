@@ -105,7 +105,7 @@ function solveLinearDynamicalSystem(
 	println("------------------Solving Using FLAT-----------------")
     problem = fully_adaptive_trust_region_method.Problem_Data(nlp, 0.1, 0.1, 8.0, 1.0, ITERATION_LIMIT, GRADIENT_TOLERANCE)
     δ = 0.0
-    solution, status, iteration_stats, computation_stats, itr = fully_adaptive_trust_region_method.SOAT(problem, x0, δ)
+    solution, status, iteration_stats, computation_stats, itr = fully_adaptive_trust_region_method.FLAT(problem, x0, δ)
 
     h = reshape(solution[1:n * T], T, n)
     A = reshape(solution[n * T + 1: n * n + n * T], n, n)

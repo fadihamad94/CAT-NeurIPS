@@ -492,10 +492,10 @@ function optimize_models()
 end
 
 
-@testset "basic_SOAT_tests" begin
+@testset "basic_FLAT_tests" begin
     unit_tests()
 end
 
-@testset "optimization_SOAT_tests" begin
+@testset "optimization_FLAT_tests" begin
     optimize_models()
 end

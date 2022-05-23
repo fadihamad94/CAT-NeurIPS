@@ -7,9 +7,9 @@ Defines parses and args.
 A dictionary with the values of the command-line arguments.
 """
 
-function if_mkdir(dir::String)
+function if_mkpath(dir::String)
   if !isdir(dir)
-     mkdir(dir)
+     mkpath(dir)
   end
 end
 
@@ -73,7 +73,7 @@ function main()
   σ = parsed_args["σ"]
   instances = parsed_args["instances"]
   println("pwd: ", pwd())
-  if_mkdir("$folder_name")
+  if_mkpath("$folder_name")
 
   solveLinearDynamicalSystemMultipleTimes(folder_name, max_it, max_time, tol_opt, d, T, σ, instances)
 end

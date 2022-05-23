@@ -23,9 +23,9 @@ function readFile(filePath::String)
     return df
 end
 
-function if_mkdir(dir::String)
+function if_mkpath(dir::String)
   if !isdir(dir)
-     mkdir(dir)
+     mkpath(dir)
   end
 end
 
@@ -77,7 +77,7 @@ function generateALLResultsCSVFile(directoryName::String, df_results_FLAT_FACTOR
         merged_vector = vcat(matrix_results_FLAT_FACTORIZATION[row, :], matrix_results_FLAT_THETA_ZERO_FACTORIZATION[row, :], matrix_results_ARC_G_RULE_OPTIMIZATION[row, :], matrix_results_TRUST_REGION_OPTIMIZATION[row, :])
         push!(results, merged_vector)
     end
-    if_mkdir(directoryName)
+    if_mkpath(directoryName)
     all_results_file_path = string(directoryName, "/", "all_algorithm_all_results.csv")
     CSV.write(all_results_file_path, results, header = true)
 end
