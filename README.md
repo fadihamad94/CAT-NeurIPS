@@ -50,7 +50,7 @@ $ julia --project=scripts scripts/solve_cutest.jl --help
 Here is a simple example:
 
 ```shell
-$ julia --project=scripts scripts/solve_cutest.jl --output_dir ./scripts/benchmark/results default_problems true --solver FLAT
+$ julia --project=scripts scripts/solve_cutest.jl --output_dir ./scripts/benchmark/results --default_problems true --solver FLAT
 ```
 
 ### Complexity hard example
