@@ -14,7 +14,7 @@ Validate setup by running the unit tests:
 $ julia --project=scripts test/run_tests.jl
 ```
 
-##Running
+## Running
 ### Learning linear dynamical systems
 To test our solver on learning linear dynamical system, please use the script:
 
