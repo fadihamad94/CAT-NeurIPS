@@ -5,7 +5,7 @@ This package is the implementation of a fully adaptive trust-region method for f
 Install Julia 1.6.0 or later. From the root directory of the repository, run:
 
 '''console
-$ julia --project=scripts -e '\'import Pkg; Pkg.instantiate()'\'
+$ julia --project=scripts -e \'import Pkg; Pkg.instantiate()\'
 '''
 
 Validate setup by running the unit tests:
