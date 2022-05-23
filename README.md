@@ -11,7 +11,7 @@ $ julia --project=scripts -e 'import Pkg; Pkg.instantiate()'
 Validate setup by running the unit tests:
 
 ```console
-julia --project=scripts test/run_tests.jl
+$ julia --project=scripts test/run_tests.jl
 ```
 
 ##Running
@@ -31,7 +31,7 @@ $ julia --project=scripts scripts/solve_learning_problem.jl --help
 Here is a simple example:
 
 ```console
-julia --project=scripts scripts/solve_learning_problem.jl --output_dir ./scripts/benchmark/results --d 3 --T 5 --σ 0.1 --instances 5
+$ julia --project=scripts scripts/solve_learning_problem.jl --output_dir ./scripts/benchmark/results --d 3 --T 5 --σ 0.1 --instances 5
 ```
 
 ### CUTEst test set
@@ -50,7 +50,7 @@ $ julia --project=scripts scripts/solve_cutest.jl --help
 Here is a simple example:
 
 ```console
-julia --project=scripts scripts/solve_cutest.jl --output_dir ./scripts/benchmark/results default_problems true --solver FLAT
+$ julia --project=scripts scripts/solve_cutest.jl --output_dir ./scripts/benchmark/results default_problems true --solver FLAT
 ```
 
 ### Complexity hard example
@@ -70,5 +70,5 @@ $ julia --project=scripts scripts/solve_hard_example.jl --help
 Here is a simple example:
 
 ```console
-julia --project=scripts scripts/solve_hard_example.jl --output_dir ./scripts --tol_opt 1e-3 --r_1 1.5
+$ julia --project=scripts scripts/solve_hard_example.jl --output_dir ./scripts --tol_opt 1e-3 --r_1 1.5
 ```
