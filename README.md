@@ -72,3 +72,8 @@ Here is a simple example:
 ```shell
 $ julia --project=scripts scripts/solve_hard_example.jl --output_dir ./scripts --tol_opt 1e-3 --r_1 1.5
 ```
+
+### Plots for CUTEst test set
+```shell
+$ julia --project=scripts scripts/plot_CUTEst_results.jl --output_dir ./scripts
+```

@@ -4,6 +4,7 @@ include("../src/FLAT.jl")
 const problems_paper_list =  ["ALLINITU", "ARGLINA", "BARD", "BEALE", "BIGGS6", "BOX3", "BRKMCC", "BROWNAL", "BROWNBS", "BROWNDEN", "CHNROSNB", "CLIFF", "CUBE", "DECONVU", "DENSCHNA", "DENSCHNB", "DENSCHNC", "DENSCHND", "DENSCHNE", "DENSCHNF", "DJTL", "ENGVAL2", "ERRINROS", "EXPFIT", "GENROSE", "GENROSEB", "GROWTHLS", "GULF", "HAIRY", "HATFLDD", "HATFLDE", "HEART6LS", "HEART8LS", "HELIX", "HIMMELBB", "HUMPS", "HYDC20LS", "JENSMP", "KOWOSB", "LOGHAIRY", "MANCINO", "MEXHAT", "MEYER3", "OSBORNEA", "OSBORNEB", "OSCIPATH", "PALMER5C", "PALMER6C", "PALMER7C", "PALMER8C", "PARKCH", "PENALTY2", "PENALTY3", "PFIT1LS", "PFIT2LS", "PFIT3LS", "PFIT4LS", "ROSENBR", "S308", "SENSORS", "SINEVAL", "SISSER", "SNAIL", "STREG", "TOINTGOR", "TOINTPSP", "VARDIM", "VIBRBEAM", "WATSON", "YFITU"]
 
 const optimization_method_flat = "FLAT"
+const optimization_method_flat_theta_0 = "FLAT_THETA_ZERO"
 const optimization_metnod_newton_trust_region = "NewtonTrustRegion"
 
 function f(x::Vector)
@@ -51,7 +52,11 @@ function run_cutest_with_flat(
     if !default_problems
         cutest_problems = get_problem_list(min_nvar, max_nvar)
     end
-    optimization_method = optimization_method_flat
+	if θ == 0.0
+		optimization_method = optimization_method_flat_theta_0
+	else
+    	optimization_method = optimization_method_flat
+	end
 	executeCUTEST_Models_benchmark(cutest_problems, folder_name, optimization_method, max_it, max_time, tol_opt, θ, β, ω, γ_2, r_1, δ)
 end
 
@@ -92,7 +97,7 @@ function runModelFromProblem(
     try
         println("-----------EXECUTING PROBLEM----------", cutest_problem)
         nlp = CUTEstModel(cutest_problem)
-		if optimization_method == optimization_method_flat
+		if optimization_method == optimization_method_flat || optimization_method == optimization_method_flat_theta_0
 			problem = fully_adaptive_trust_region_method.Problem_Data(nlp, β, θ, ω, r_1, max_it, tol_opt, max_time, γ_2)
 	        x_1 = problem.nlp.meta.x0
 	        x, status, iteration_stats, computation_stats, total_iterations_count = fully_adaptive_trust_region_method.SOAT(problem, x_1, δ)
