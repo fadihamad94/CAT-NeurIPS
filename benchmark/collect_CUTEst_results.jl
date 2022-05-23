@@ -136,6 +136,3 @@ function collectAllResults(directoryName::String)
     df_results_GRADIENT = mergeDataFrames(df_results_FLAT_FACTORIZATION_GRADIENT, df_results_FLAT_THETA_ZERO_FACTORIZATION_GRADIENT, df_results_ARC_G_RULE_OPTIMIZATION_GRADIENT, df_results_TRUST_REGION_OPTIMIZATION_GRADIENT)
     saveCSVFile(directoryName, "gradients", df_results_GRADIENT)
 end
-
-# directoryName = "/Users/fah33/PhD_Research/FLAT/benchmark/results"
-# collectAllResults(directoryName)
