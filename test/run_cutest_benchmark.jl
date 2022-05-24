@@ -1,7 +1,7 @@
 using JuMP, NLPModels, NLPModelsJuMP, LinearAlgebra, Optim, CUTEst, CSV, Test, DataFrames, SparseArrays
 include("../src/FLAT.jl")
 
-const problems_paper_list =  ["ALLINITU", "ARGLINA", "BARD", "BEALE", "BIGGS6", "BOX3", "BRKMCC", "BROWNAL", "BROWNBS", "BROWNDEN", "CHNROSNB", "CLIFF", "CUBE", "DECONVU", "DENSCHNA", "DENSCHNB", "DENSCHNC", "DENSCHND", "DENSCHNE", "DENSCHNF", "DJTL", "ENGVAL2", "ERRINROS", "EXPFIT", "GENROSE", "GENROSEB", "GROWTHLS", "GULF", "HAIRY", "HATFLDD", "HATFLDE", "HEART6LS", "HEART8LS", "HELIX", "HIMMELBB", "HUMPS", "HYDC20LS", "JENSMP", "KOWOSB", "LOGHAIRY", "MANCINO", "MEXHAT", "MEYER3", "OSBORNEA", "OSBORNEB", "OSCIPATH", "PALMER5C", "PALMER6C", "PALMER7C", "PALMER8C", "PARKCH", "PENALTY2", "PENALTY3", "PFIT1LS", "PFIT2LS", "PFIT3LS", "PFIT4LS", "ROSENBR", "S308", "SENSORS", "SINEVAL", "SISSER", "SNAIL", "STREG", "TOINTGOR", "TOINTPSP", "VARDIM", "VIBRBEAM", "WATSON", "YFITU"]
+const problems_paper_list =  ["ALLINITU", "ARGLINA", "BARD", "BEALE", "BIGGS6", "BOX3", "BRKMCC", "BROWNAL", "BROWNBS", "BROWNDEN", "CHNROSNB", "CLIFF", "CUBE", "DENSCHNA", "DENSCHNB", "DENSCHNC", "DENSCHND", "DENSCHNE", "DENSCHNF", "DJTL", "ENGVAL2", "ERRINROS", "EXPFIT", "GENROSEB", "GROWTHLS", "GULF", "HAIRY", "HATFLDD", "HATFLDE", "HEART6LS", "HEART8LS", "HELIX", "HIMMELBB", "HUMPS", "HYDC20LS", "JENSMP", "KOWOSB", "LOGHAIRY", "MANCINO", "MEXHAT", "MEYER3", "OSBORNEA", "OSBORNEB", "PALMER5C", "PALMER6C", "PALMER7C", "PALMER8C", "PARKCH", "PENALTY2", "PENALTY3", "PFIT1LS", "PFIT2LS", "PFIT3LS", "PFIT4LS", "ROSENBR", "S308", "SENSORS", "SINEVAL", "SISSER", "SNAIL", "STREG", "TOINTGOR", "TOINTPSP", "VARDIM", "VIBRBEAM", "WATSON", "YFITU"]
 
 const optimization_method_flat = "FLAT"
 const optimization_method_flat_theta_0 = "FLAT_THETA_ZERO"
@@ -127,6 +127,9 @@ function runModelFromProblem(
 			graient_value = norm(grad(nlp, x), 2)
 			computation_stats = Dict("total_function_evaluation" => total_function_evaluation, "total_gradient_evaluation" => total_gradient_evaluation, "total_hessian_evaluation" => total_hessian_evaluation, "function_value" => function_value, "gradient_value" => graient_value)
 			status = results.g_converged ? "OPTIMAL" : (Optim.iteration_limit_reached(results) ? "ITERATION_LIMIT" : "FAILURE")
+			if status == ITERATION_LIMIT
+				total_iterations_count = max_it + 1
+			end
 			println("------------------------MODEL SOLVED WITH STATUS: ", status)
 			directory_name = string(folder_name, "/", "$optimization_method")
 			outputIterationsStatusToCSVFile(directory_name, cutest_problem, status, computation_stats, total_iterations_count, optimization_method)
@@ -159,7 +162,7 @@ function executeCUTEST_Models_benchmark(
     rm(total_results_output_file_path, force=true)
     mkpath(total_results_output_directory);
     open(total_results_output_file_path,"a") do iteration_status_csv_file
-		write(iteration_status_csv_file, "problem_name, status, total_iterations_count, function_value, graient_value, total_function_evaluation, total_gradient_evaluation, total_hessian_evaluation\n");
+		write(iteration_status_csv_file, "problem_name,status,total_iterations_count,function_value,graient_value,total_function_evaluation,total_gradient_evaluation,total_hessian_evaluation\n");
     end
 
 	for problem in cutest_problems
@@ -188,6 +191,6 @@ function outputIterationsStatusToCSVFile(
     gradient_value = computation_stats["gradient_value"]
 	file_name = string(directory_name, "/", "table_cutest_$optimization_method.csv")
     open(file_name,"a") do iteration_status_csv_file
-		write(iteration_status_csv_file, "$cutest_problem, $status, $total_iterations_count, $function_value, $gradient_value, $total_function_evaluation, $total_gradient_evaluation, $total_hessian_evaluation\n")
+		write(iteration_status_csv_file, "$cutest_problem,$status,$total_iterations_count,$function_value,$gradient_value,$total_function_evaluation,$total_gradient_evaluation,$total_hessian_evaluation\n")
     end
 end

@@ -24,7 +24,7 @@ mutable struct Problem_Data
                            MAX_ITERATION::Int64=10000, gradient_termination_tolerance::Float64=1e-5,
                            MAX_TIME::Float64=30 * 60.0, γ_2::Float64=0.8)
         @assert(β > 0 && β < 1)
-        @assert(θ > 0 && θ < 1)
+        @assert(θ >= 0 && θ < 1)
         @assert(β * θ < 1 - β)
         @assert(ω > 1)
         @assert(r_1 > 0)
@@ -124,7 +124,7 @@ function FLAT(problem::Problem_Data, x::Vector{Float64}, δ::Float64)
     catch e
         @warn e
         computation_stats = Dict("total_function_evaluation" => (MAX_ITERATION + 1), "total_gradient_evaluation" => (MAX_ITERATION + 1), "total_hessian_evaluation" => total_hessian_evaluation)
-        return x_k, "FAILURE", iteration_stats, computation_stats, k
+        return x_k, "FAILURE", iteration_stats, computation_stats, (MAX_ITERATION + 1)
     end
     computation_stats = Dict("total_function_evaluation" => total_function_evaluation, "total_gradient_evaluation" => total_gradient_evaluation, "total_hessian_evaluation" => total_hessian_evaluation)
     return x_k, "ITERARION_LIMIT", iteration_stats, computation_stats, (MAX_ITERATION + 1)

@@ -25,7 +25,7 @@ function parse_command_line()
     "--max_it"
     help = "The maximum number of iterations to run"
     arg_type = Int64
-    default = 100000
+    default = 10000
 
     "--max_time"
     help = "The maximum time to run in seconds"
