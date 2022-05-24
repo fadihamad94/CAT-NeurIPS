@@ -50,7 +50,7 @@ function parse_command_line()
     "--σ"
     help="Standard deviation for the gaussian noise in the evolution of the system"
     arg_type = Float64
-    default = 1.0
+    default = 0.01
 
     "--instances"
     help="Number of randomly generated instances to solve"
