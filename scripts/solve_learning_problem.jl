@@ -72,7 +72,6 @@ function main()
   T = parsed_args["T"]
   σ = parsed_args["σ"]
   instances = parsed_args["instances"]
-  println("pwd: ", pwd())
   if_mkpath("$folder_name")
 
   solveLinearDynamicalSystemMultipleTimes(folder_name, max_it, max_time, tol_opt, d, T, σ, instances)
