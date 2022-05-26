@@ -1,5 +1,5 @@
 # FLAT
-This package is the implementation of a **f**u**l**ly **a**daptive **t**rust-region method for finding stationary points of nonconvex functions with L-Lipschitz Hessians and bounded optimality gap.
+This package is the implementation of a **f**u**l**ly **a**daptive **t**rust-region method (called FLAT) for finding stationary points of nonconvex functions with L-Lipschitz Hessians and bounded optimality gap.
 
 ## One-time setup
 Install Julia 1.6.0 or later. From the root directory of the repository, run:
