@@ -1,5 +1,5 @@
-# FLAT
-This package is the implementation of a **f**u**l**ly **a**daptive **t**rust-region method (called FLAT) for finding stationary points of nonconvex functions with L-Lipschitz Hessians and bounded optimality gap.
+# CAT
+This package is the implementation of a consistently **a**daptive **t**rust-region method (called CAT) for finding stationary points of nonconvex functions with L-Lipschitz Hessians and bounded optimality gap.
 
 ## One-time setup
 Install Julia 1.6.0 or later. From the root directory of the repository, run:
@@ -32,6 +32,25 @@ Here is a simple example:
 
 ```console
 $ julia --project=scripts scripts/solve_learning_problem.jl --output_dir ./scripts/benchmark/results --d 3 --T 5 --σ 0.1 --instances 5
+```
+
+## MAtrix completion problem
+To test our solver on matrix completion problem, please use the script:
+
+```julia
+solve_matrix_completion.jl
+```
+
+To see the meaning of each argument:
+
+```shell
+$ julia --project=scripts scripts/solve_matrix_completion.jl --help
+```
+
+Here is a simple example:
+
+```shell
+$ julia --project=scripts scripts/solve_matrix_completion.jl --output_dir ./scripts/benchmark/results --λ1 0.001 --λ2 0.001 --instances 5
 ```
 
 ### CUTEst test set
