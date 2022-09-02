@@ -31,10 +31,10 @@ $ julia --project=scripts scripts/solve_learning_problem.jl --help
 Here is a simple example:
 
 ```console
-$ julia --project=scripts scripts/solve_learning_problem.jl --output_dir ./scripts/benchmark/results --d 3 --T 5 --σ 0.1 --instances 5
+$ julia --project=scripts scripts/solve_learning_problem.jl --output_dir ./scripts/benchmark/results/learning_problem --d 3 --T 5 --σ 0.1 --instances 5
 ```
 
-## MAtrix completion problem
+## Matrix completion problem
 To test our solver on matrix completion problem, please use the script:
 
 ```julia
@@ -50,7 +50,7 @@ $ julia --project=scripts scripts/solve_matrix_completion.jl --help
 Here is a simple example:
 
 ```shell
-$ julia --project=scripts scripts/solve_matrix_completion.jl --output_dir ./scripts/benchmark/results --λ1 0.001 --λ2 0.001 --instances 5
+$ julia --project=scripts scripts/solve_matrix_completion.jl --output_dir ./scripts/benchmark/results/matrix_completion --λ1 0.001 --λ2 0.001 --instances 5
 ```
 
 ### CUTEst test set
@@ -69,7 +69,7 @@ $ julia --project=scripts scripts/solve_cutest.jl --help
 Here is a simple example:
 
 ```shell
-$ julia --project=scripts scripts/solve_cutest.jl --output_dir ./scripts/benchmark/results --default_problems true --solver CAT
+$ julia --project=scripts scripts/solve_cutest.jl --output_dir ./scripts/benchmark/results/cutest --default_problems true --solver CAT
 ```
 
 ### Complexity hard example
@@ -89,10 +89,43 @@ $ julia --project=scripts scripts/solve_hard_example.jl --help
 Here is a simple example:
 
 ```shell
-$ julia --project=scripts scripts/solve_hard_example.jl --output_dir ./scripts --tol_opt 1e-3 --r_1 1.5
+$ julia --project=scripts scripts/solve_hard_example.jl --output_dir ./scripts/benchmark/results/hard_complexity_example --tol_opt 1e-3 --r_1 1.5
 ```
 
 ### Plots for CUTEst test set
 ```shell
 $ julia --project=scripts scripts/plot_CUTEst_results.jl --output_dir ./scripts
+```
+
+## Instructions for reproducing our experiments
+### Learning linear dynamical systems
+
+```console
+$ julia --project=scripts scripts/solve_learning_problem.jl --output_dir ./scripts/benchmark/results/learning_problem --d 4 --T 50 --σ 0.01 --instances 60
+```
+
+## Matrix completion problem
+
+```shell
+$ julia --project=scripts scripts/solve_matrix_completion.jl --output_dir ./scripts/benchmark/results/matrix_completion --λ1 0.01 --λ2 0.01 --instances 10
+```
+
+### CUTEst test set
+
+```shell
+$ julia --project=scripts scripts/solve_cutest.jl --output_dir ./scripts/benchmark/results/cutest --default_problems true --solver CAT
+```
+
+```shell
+$ julia --project=scripts scripts/solve_cutest.jl --output_dir ./scripts/benchmark/results/cutest --default_problems true --solver CAT --θ 0.0
+```
+
+```shell
+$ julia --project=scripts scripts/solve_cutest.jl --output_dir ./scripts/benchmark/results/cutest --default_problems true --solver NewtonTrustRegion
+```
+
+### Complexity hard example
+
+```shell
+$ julia --project=scripts scripts/solve_hard_example.jl --output_dir ./scripts/benchmark/results/hard_complexity_example --tol_opt 1e-3 --r_1 1.5
 ```
