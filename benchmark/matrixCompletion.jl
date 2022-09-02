@@ -1,46 +1,86 @@
 using JuMP, NLPModels, NLPModelsJuMP, Random, Distributions, LinearAlgebra, Test, Optim, DataFrames, StatsBase, CSV
 include("../src/CAT.jl")
+include("../src/tru.jl")
+include("../src/arc.jl")
 Random.seed!(0)
-
 const CAT_SOLVER = "CAT"
 const NEWTON_TRUST_REGION_SOLVER = "NewtonTrustRegion"
 
-function generateRandomData(T::Int64, n::Int64, d::Int64, σ::Float64=1.0)
-	@show σ
-    u = rand(Normal(), T, d)
-    ϑ = rand(Normal(), T, n)
-    ξ = rand(Normal(0, σ), T, n)
-    B = rand(Normal(), n, d)
-    temp_matrix = rand(Normal(), n, n)
-    Q, R = qr(temp_matrix)
-    D = Diagonal(rand(Uniform(0.9, 0.99), n))
-    A = transpose(Q) * D * Q
-    return u, ϑ, ξ, B, A
+function formulateMatrixCompletionProblem(M::Matrix, Ω::Matrix{Int64}, r::Int64, λ_1::Float64, λ_2::Float64)
+	@show "Creating model"
+	model = Model()
+
+	D = transpose(M)
+    n_1 = size(D)[1]
+	n_2 = size(D)[2]
+	Ω = transpose(Ω)
+	temp_D = Ω .* D
+	μ = mean(temp_D)
+	@show "Creating variables"
+	A = ones(n_1, r)
+	B = ones(n_2, r)
+	@variable(model, P[i=1:n_1, j=1:r], start = A[i, j])
+	@variable(model, Q[i=1:n_2, j=1:r], start = B[i, j])
+
+	@NLexpression(model, sum_observer_deviation_rows_squared, sum(((1 / n_2) * sum(sum(P[i, k] * transpose(Q)[k, j] for k in 1:r) for j in 1:n_2) - μ) ^ 2 for i in 1:n_1))
+
+	@NLexpression(model, sum_observer_deviation_columns_squared, sum(((1 / n_1) * sum(sum(P[i, k] * transpose(Q)[k, j] for k in 1:r) for i in 1:n_1) - μ) ^ 2 for j in 1:n_2))
+
+	@NLexpression(model, frobeniusNorm_P, sum(sum(P[i, j] ^ 2 for j in 1:r) for i in 1:n_1))
+
+	@NLexpression(model, frobeniusNorm_Q, sum(sum(Q[i, j] ^ 2 for j in 1:r) for i in 1:n_2))
+
+	@NLexpression(model, square_loss,  0.5 * (sum(sum(Ω[i, j] * (D[i, j] - μ - ((1 / n_2) * sum(sum(P[i, k] * transpose(Q)[k, j] for k in 1:r) for j in 1:n_2) - μ) - ((1 / n_1) * sum(sum(P[i, k] * transpose(Q)[k, j] for k in 1:r) for i in 1:n_1) - μ) - sum(P[i, k] * transpose(Q)[k, j] for k in 1:r)) ^ 2 for j in 1:n_2) for i in 1:n_1)))
+
+	@show "Defining objective function"
+	@NLobjective(model, Min, square_loss + λ_1 * (sum_observer_deviation_rows_squared + sum_observer_deviation_columns_squared) + λ_2 * (frobeniusNorm_P + frobeniusNorm_Q))
+	return model
 end
 
-function computeData(T::Int64, n::Int64, d::Int64, σ::Float64=1.0)
-    u, ϑ, ξ, B, A = generateRandomData(T, n, d, σ)
-    h = zeros(T, n)
-    x = zeros(T, n)
-    for t in 1:(T-1)
-        x[t, :] = h[t, :] .+ ϑ[t, :]
-        h[t + 1, :] = A * h[t, :] .+ B * u[t, :] .+ ξ[t, :]
-    end
-    return h, x, u
+function prepareData(directoryName::String, fileName::String, rows::Int64, columns::Int64)
+	filePath = string(directoryName, "/", fileName)
+	df = DataFrame(CSV.File(filePath))
+	for i in 1:size(df)[1]
+		for j in 1:size(df)[2]
+			if typeof(df[i, j]) == Missing
+				df[i, j] = 1.0
+			end
+		end
+	end
+
+	df = Missings.replace(df, 1.0)
+	df = df[2:(2 + rows - 1),5:(5 + columns - 1)]
+	M = Matrix(df)
+	return transpose(M)
 end
 
-function formulateLinearDynamicalSystemOriginal(x::Matrix{Float64}, u::Matrix{Float64}, σ::Float64=1.0)
-    model = Model()
-    T = size(x)[1]
-    n = size(x)[2]
-    d = size(u)[2]
+function prepareData(directoryName::String, fileName::String, rows::Int64, columns::Int64, i::Int64, j::Int64)
+	@show "Reading file: $fileName"
+	filePath = string(directoryName, "/", fileName)
+	df = DataFrame(CSV.File(filePath))
+	@show "Replacing missing values"
+	for i in 1:size(df)[1]
+		for j in 1:size(df)[2]
+			if typeof(df[i, j]) == Missing
+				df[i, j] = 1.0
+			end
+		end
+	end
 
-	@variable(model, h[t=1:T, i=1:n])
-    @variable(model, A[i=1:n, j=1:n])
-    @variable(model, B[1:n, 1:d])
+	df = Missings.replace(df, 1.0)
+	@show "Creating Matrix M"
+	df = df[2:size(df)[1], 5:size(df)[2]]
+	df = df[1 + rows * (i - 1):rows * i,1 + columns * (j - 1):columns * j]
+	M = Matrix(df)
+	return M
+end
 
-    @NLobjective(model, Min, sum((1 / σ ^ 2) * sum((h[t+1, i] - sum(A[i, j] * h[t, j] for j in 1:n) - sum(B[i, j] * u[t, j] for j in 1:d)) ^ 2 for i in 1:n) + sum((x[t, i] - h[t, i]) ^ 2 for i in 1:n) for t in 1:(T-1)))
-    return model
+function sampleData(M::Matrix)
+	rows = size(M)[1]
+	columns = size(M)[2]
+	T = rows * columns
+	Ω = rand(DiscreteUniform(0,1), rows, columns)
+	return Ω
 end
 
 function f(x::Vector)
@@ -65,69 +105,65 @@ function hv!(Hv::Vector, x::Vector, v::Vector)
     Hv[:] = H * v
 end
 
-function validateResults(
-	nlp::AbstractNLPModel,
-	solution::Vector,
-	h::Matrix,
-	A::Matrix,
-	B::Matrix,
-	u::Matrix,
-	x::Matrix,
-	T::Int64,
-	d::Int64,
-	σ::Float64
-	)
-	n = d
-	objective_function_nlp_model = obj(nlp, solution)
-    objective_function_formulation =  sum((1 / σ ^ 2) * (norm(h[t + 1, :] - A * h[t, :] - B * u[t, :], 2)) ^ 2 + (norm(x[t, :] - h[t, :],2 )) ^ 2 for t in 1:(T-1))
-    objective_function_formulation_original = sum((1 / σ ^ 2) * sum((h[t+1, i] - sum(A[i, j] * h[t, j] for j in 1:n) - sum(B[i, j] * u[t, j] for j in 1:d)) ^ 2 for i in 1:n) + sum((x[t, i] - h[t, i]) ^ 2 for i in 1:n) for t in 1:(T-1))
-    @test norm(objective_function_nlp_model - objective_function_formulation, 2) <= 1e-8
-    @test norm(objective_function_nlp_model - objective_function_formulation_original, 2) <= 1e-8
-end
-
-function solveLinearDynamicalSystem(
+function solveMatricCompletion(
 	max_it::Int64,
 	max_time::Float64,
 	tol_opt::Float64,
-	d::Int64,
-	T::Int64,
-	σ::Float64
+	M::Matrix,
+	Ω::Matrix{Int64},
+	r::Int64,
+	λ_1::Float64,
+	λ_2::Float64
 	)
-	n = d
+	m = size(M)[1]
+	n = size(M)[2]
 	all_results = DataFrame(solver = [], itr = [], total_function_evaluation = [],  total_gradient_evaluation = [])
-    h, x, u = computeData(T, n, d, σ)
-    model = formulateLinearDynamicalSystemOriginal(x, u, σ)
+    @time begin
+		model = formulateMatrixCompletionProblem(M, Ω, r, λ_1, λ_2)
+	end
     global nlp = MathOptNLPModel(model)
     x0 = nlp.meta.x0
 	GRADIENT_TOLERANCE = tol_opt
 	ITERATION_LIMIT = max_it
 
 	println("------------------Solving Using CAT-----------------")
-    problem = fully_adaptive_trust_region_method.Problem_Data(nlp, 0.1, 0.1, 8.0, 1.0, ITERATION_LIMIT, GRADIENT_TOLERANCE)
+    problem = consistently_adaptive_trust_region_method.Problem_Data(nlp, 0.1, 0.1, 8.0, 1.0, ITERATION_LIMIT, GRADIENT_TOLERANCE)
     δ = 0.0
-    solution, status, iteration_stats, computation_stats, itr = fully_adaptive_trust_region_method.CAT(problem, x0, δ)
-
-    h = reshape(solution[1:n * T], T, n)
-    A = reshape(solution[n * T + 1: n * n + n * T], n, n)
-    B = reshape(solution[n * n + n * T + 1: length(solution)], n, d)
-	validateResults(nlp, solution, h, A, B, u, x, T, d, σ)
+	@time begin
+		solution, status, iteration_stats, computation_stats, itr = consistently_adaptive_trust_region_method.CAT(problem, x0, δ)
+	end
+    X = reshape(solution[1:(m * r)], m, r)
+	Y = reshape(solution[(m * r) + 1:end], n, r)
 	push!(all_results, (CAT_SOLVER, itr, computation_stats["total_function_evaluation"], computation_stats["total_gradient_evaluation"]))
 
 	println("------------------Solving Using NewtonTrustRegion------------------")
 	d_ = Optim.TwiceDifferentiable(f, g!, h!, nlp.meta.x0)
-	results = optimize(d_, nlp.meta.x0, Optim.NewtonTrustRegion(), Optim.Options(show_trace=false, iterations = ITERATION_LIMIT, f_calls_limit = ITERATION_LIMIT, g_abstol = GRADIENT_TOLERANCE))
+	@time begin
+		results = optimize(d_, nlp.meta.x0, Optim.NewtonTrustRegion(), Optim.Options(show_trace=false, iterations = ITERATION_LIMIT, f_calls_limit = ITERATION_LIMIT, g_abstol = GRADIENT_TOLERANCE))
+	end
 	if  !Optim.converged(results)
 		push!(all_results, (NEWTON_TRUST_REGION_SOLVER, ITERATION_LIMIT, ITERATION_LIMIT, ITERATION_LIMIT))
 	else
 		solution = Optim.minimizer(results)
-		h = reshape(solution[1:n * T], T, n)
-	    A = reshape(solution[n * T + 1: n * n + n * T], n, n)
-	    B = reshape(solution[n * n + n * T + 1: length(solution)], n, d)
-		validateResults(nlp, solution, h, A, B, u, x, T, d, σ)
+		X = reshape(solution[1:(m * r)], m, r)
+		Y = reshape(solution[(m * r) + 1:end], n, r)
+		@show Optim.iterations(results)
 		push!(all_results, (NEWTON_TRUST_REGION_SOLVER, Optim.iterations(results), Optim.f_calls(results), Optim.g_calls(results)))
 	end
 
 	return all_results
+end
+
+function getData(directoryName::String, fileName::String, rows::Int64, columns::Int64)
+	M = prepareData(directoryName, fileName, rows, columns)
+	Ω = sampleData(M)
+	return M, Ω
+end
+
+function getData(directoryName::String, fileName::String, rows::Int64, columns::Int64, i::Int64, j::Int64)
+	M = prepareData(directoryName, fileName, rows, columns, i, j)
+	Ω = sampleData(M)
+	return M, Ω
 end
 
 function filterRows(solver::String, iterations_vector::Vector{Int64})
@@ -305,25 +341,49 @@ function computeCI(dirrectoryName::String, all_instances_results::Dict{String, V
 	return CI_geomean_CAT, CI_geomean_newton
 end
 
-function solveLinearDynamicalSystemMultipleTimes(
+function solveMatrixCompletionMultipleTimes(
 		folder_name::String,
-		max_it::Int64, max_time::Float64,
+		max_it::Int64,
+		max_time::Float64,
 		tol_opt::Float64,
-		d::Int64,
-		T::Int64,
-		σ::Float64,
+		λ_1::Float64,
+		λ_2::Float64,
 		instances::Int64
 	)
+	@show VERSION
+	@show folder_name
+	@show max_it
+	@show max_time
+	@show tol_opt
+	@show λ_1
+	@show λ_2
+	@show instances
 	all_instances_results = Dict(CAT_SOLVER => [], NEWTON_TRUST_REGION_SOLVER => [])
-	for i in 1:instances
-		df = solveLinearDynamicalSystem(max_it, max_time, tol_opt, d, T, σ)
-		for key in keys(all_instances_results)
-			temp = all_instances_results[key]
-			temp_vector = filter(:solver => ==(key), df)
-			push!(temp, [temp_vector[1, 2], temp_vector[1, 3], temp_vector[1, 4]])
-			all_instances_results[key] = temp
-        end
+
+	fileNames = ["Adamstown 132_11kV FY2021.csv"]
+	for fileName in fileNames
+		i = 1
+		j = 1
+		rows = 30
+		columns = 48
+		r = 9
+		D, Ω = getData(string(folder_name, "/", "data"), fileName, rows, columns, i, j)
+		for k in 1:instances
+			try
+				df = solveMatricCompletion(max_it, max_time, tol_opt, D, Ω, r, λ_1, λ_2)
+				for key in keys(all_instances_results)
+					temp = all_instances_results[key]
+					temp_vector = filter(:solver => ==(key), df)
+					push!(temp, [temp_vector[1, 2], temp_vector[1, 3], temp_vector[1, 4]])
+					all_instances_results[key] = temp
+				end
+				Ω = sampleData(D)
+			catch e
+				@show e
+			end
+		end
 	end
+
 	file_name_paper_results = "full_paper_results_geomean.txt"
 	full_path_paper_results =  string(folder_name, "/", file_name_paper_results)
 	paper_results = DataFrame(solver = [], itr = [], total_function_evaluation = [],  total_gradient_evaluation = [])
@@ -333,3 +393,12 @@ function solveLinearDynamicalSystemMultipleTimes(
 	computeCI(folder_name, all_instances_results)
 	@show paper_results
 end
+
+# folder_name = "/Users/fah33/PhD_Research/CAT/benchmark"
+# max_it = 10000
+# max_time = 30 * 60.0
+# tol_opt = 1e-5
+# λ_1 = 0.001
+# λ_2 = 0.001
+# instances = 10
+# solveMatrixCompletionMultipleTimes(folder_name, max_it, max_time, tol_opt, λ_1, λ_2, instances)

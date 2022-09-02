@@ -1,11 +1,11 @@
 __precompile__()
 #Main algorithm code goes here
-module fully_adaptive_trust_region_method
+module consistently_adaptive_trust_region_method
 using NLPModels, LinearAlgebra, DataFrames, SparseArrays
 include("./trust_region_subproblem_solver.jl")
 
 export Problem_Data
-export phi, findinterval, bisection, restoreFullMatrix, computeSecondOrderModel, optimizeSecondOrderModel, compute_ρ, FLAT
+export phi, findinterval, bisection, restoreFullMatrix, computeSecondOrderModel, optimizeSecondOrderModel, compute_ρ, CAT
 
 mutable struct Problem_Data
     nlp::AbstractNLPModel
@@ -46,7 +46,7 @@ function compute_ρ(fval_current::Float64, fval_next::Float64, gval_current::Vec
     return ρ
 end
 
-function FLAT(problem::Problem_Data, x::Vector{Float64}, δ::Float64)
+function CAT(problem::Problem_Data, x::Vector{Float64}, δ::Float64, subproblem_solver_method::String=subproblem_solver_methods.OPTIMIZATION_METHOD_DEFAULT)
     @assert(δ >= 0)
     MAX_ITERATION = problem.MAX_ITERATION
     MAX_TIME = problem.MAX_TIME
@@ -81,11 +81,12 @@ function FLAT(problem::Problem_Data, x::Vector{Float64}, δ::Float64)
         end
         start_time = time()
         while k <= MAX_ITERATION
+            @show "Iteration $k, $(norm(gval_current, 2))"
             if compute_hessian
                 hessian_current = restoreFullMatrix(hess(nlp, x_k))
                 total_hessian_evaluation += 1
             end
-            δ_k, d_k = optimizeSecondOrderModel(gval_current, hessian_current, x_k, δ_k, γ_2, r_k)
+            δ_k, d_k = solveTrustRegionSubproblem(fval_current, gval_current, hessian_current, x_k, δ_k, γ_2, r_k, subproblem_solver_method)
             fval_next = obj(nlp, x_k + d_k)
             total_function_evaluation += 1
             gval_next = grad(nlp, x_k + d_k)

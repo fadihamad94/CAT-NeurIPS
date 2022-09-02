@@ -9,8 +9,96 @@ H + δ I ≥ 0
 That is why we defined the below phi to solve that using bisection logic.
 =#
 
+const OPTIMIZATION_METHOD_TRS = "GALAHAD_TRS"
+const OPTIMIZATION_METHOD_GLTR = "GALAHAD_GLTR"
+const OPTIMIZATION_METHOD_DEFAULT = "OUR_APPROACH"
+
+mutable struct Subproblem_Solver_Methods
+    OPTIMIZATION_METHOD_TRS::String
+    OPTIMIZATION_METHOD_GLTR::String
+    OPTIMIZATION_METHOD_DEFAULT::String
+    function Subproblem_Solver_Methods()
+        return new(OPTIMIZATION_METHOD_TRS, OPTIMIZATION_METHOD_GLTR, OPTIMIZATION_METHOD_DEFAULT)
+    end
+end
+
+const subproblem_solver_methods = Subproblem_Solver_Methods()
+
+#Data returned by calling the GALAHAD library in case we solve trust region subproblem
+#using their factorization approach
+struct userdata_type_trs
+	status::Cint
+	factorizations::Cint
+	obj::Cdouble
+	solution::Ptr{Cdouble}
+	hard_case::Cuchar
+	multiplier::Cdouble
+	x_norm::Cdouble
+end
+
+#Data returned by calling the GALAHAD library in case we solve trust region subproblem
+#using their GLTR approach
+struct userdata_type_gltr
+	status::Cint
+	iter::Cint
+	obj::Cdouble
+	hard_case::Cuchar
+	multiplier::Cdouble
+	mnormx::Cdouble
+end
+
+function getHessianLowerTriangularPart(H)
+	h_vec = Vector{Float64}()
+	for i in 1:size(H)[1]
+		for j in 1:i
+			push!(h_vec, H[i, j])
+		end
+	end
+	return h_vec
+end
+
+function solveTrustRegionSubproblem(f::Float64, g::Vector{Float64}, H, x_k::Vector{Float64}, δ::Float64, ϵ::Float64, r::Float64, subproblem_solver_method::String=subproblem_solver_methods.OPTIMIZATION_METHOD_DEFAULT)
+	if subproblem_solver_method == OPTIMIZATION_METHOD_DEFAULT
+		return optimizeSecondOrderModel(g, H, δ, ϵ, r)
+	end
+
+	if subproblem_solver_method == OPTIMIZATION_METHOD_TRS
+		return trs(f, g, H, r)
+	end
+
+	if subproblem_solver_method == OPTIMIZATION_METHOD_GLTR
+		return gltr(f, g, H, r)
+	end
+
+	return optimizeSecondOrderModel(g, H, δ, ϵ, r)
+end
+
+function trs(f::Float64, g::Vector{Float64}, H, r::Float64)
+	print_level = 0
+    max_factorizations = 1000
+	H_dense = getHessianLowerTriangularPart(H)
+	d = zeros(length(g))
+	userdata = ccall((:trs, "/afs/pitt.edu/home/f/a/fah33/CAT/lib/trs.so"), userdata_type_trs, (Cint, Cdouble, Ref{Cdouble}, Ref{Cdouble}, Ref{Cdouble}, Cdouble, Cint, Cint), length(g), f, d, g, H_dense, r, print_level, max_factorizations)
+	if userdata.status != 0
+		throw(error("Failed to solve trust region subproblem using TRS factorization method from GALAHAD. Status is $(userdata.status)."))
+	end
+	return userdata.multiplier, d
+end
+
+function gltr(f::Float64, g::Vector{Float64}, H, r::Float64)
+	print_level = 0
+    iter = 100
+	H_dense = getHessianLowerTriangularPart(H)
+	d = zeros(length(g))
+	userdata = ccall((:gltr, "/afs/pitt.edu/home/f/a/fah33/CAT/lib/gltr.so"), userdata_type_gltr, (Cint, Cdouble, Ref{Cdouble}, Ref{Cdouble}, Ref{Cdouble}, Cdouble, Cint, Cint), length(g), f, d, g, H_dense, r, print_level, iter)
+	if userdata.status != 0
+		throw(error("Failed to solve trust region subproblem using GLTR iterative method from GALAHAD. Status is $(userdata.status)."))
+	end
+	return userdata.multiplier, d
+end
+
 #Based on Theorem 4.3 in Numerical Optimization by Wright
-function optimizeSecondOrderModel(g::Vector{Float64}, H, x_k::Vector{Float64}, δ::Float64, ϵ::Float64, r::Float64)
+function optimizeSecondOrderModel(g::Vector{Float64}, H, δ::Float64, ϵ::Float64, r::Float64)
     #When δ is 0 and the Hessian is positive semidefinite, we can directly compute the direction
     try
         cholesky(Matrix(H))
@@ -30,9 +118,11 @@ function optimizeSecondOrderModel(g::Vector{Float64}, H, x_k::Vector{Float64}, �
         return δ_m, d_k
     catch e
         if e == ErrorException("Bisection logic failed to find a root for the phi function")
-            return solveHardCaseLogic(g, H, r)
+	    	δ, d_k = solveHardCaseLogic(g, H, r)
+            return δ, d_k
         elseif e == ErrorException("Bisection logic failed to find a pair δ and δ_prime such that ϕ(δ) >= 0 and ϕ(δ_prime) <= 0.")
-            return solveHardCaseLogic(g, H, r)
+            δ, d_k = solveHardCaseLogic(g, H, r)
+	    	return δ, d_k
         else
             throw(e)
         end

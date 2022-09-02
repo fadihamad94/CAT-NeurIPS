@@ -1,5 +1,5 @@
 include("./hard_example_implementation_code.jl")
-include("./FLAT_complexity_modified.jl")
+include("./CAT_complexity_modified.jl")
 
 using NLPModels, LinearAlgebra, DataFrames, SparseArrays, Test
 
@@ -7,11 +7,11 @@ function solveHardComplexityExample(folder_name::String, max_it::Int64, max_time
     @test max_time > 0
     δ = 0.0
     problem = Problem_Data(0.1, θ, 8.0, r_1, max_it, max_time, tol_opt)
-    x_default, status_default, iteration_stats_default, computation_stats_default, total_iterations_count_default = FLAT(problem, x_0, η, α_k, δ)
+    x_default, status_default, iteration_stats_default, computation_stats_default, total_iterations_count_default = CAT(problem, x_0, η, α_k, δ)
     @show status_default
 
     problem = Problem_Data(0.1, 0.0, 8.0, r_1, max_it, max_time, tol_opt)
-    x_theta_0, status_theta_0, iteration_stats_theta_0, computation_stats_theta_0, total_iterations_count_theta_0 = FLAT(problem, x_0, η, α_k, δ)
+    x_theta_0, status_theta_0, iteration_stats_theta_0, computation_stats_theta_0, total_iterations_count_theta_0 = CAT(problem, x_0, η, α_k, δ)
     @show status_theta_0
 
     iteration_stats_default.k = iteration_stats_default.k .+ 1

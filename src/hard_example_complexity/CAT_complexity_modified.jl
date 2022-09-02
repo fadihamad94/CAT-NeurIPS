@@ -90,7 +90,7 @@ function findIntervalToComputeKForSecondComponentOfInputVectorX(xval, x_2::Float
     end
 end
 
-function FLAT(problem::Problem_Data, x_0::Vector{Float64}, η::Float64, α_k::Float64, δ::Float64)
+function CAT(problem::Problem_Data, x_0::Vector{Float64}, η::Float64, α_k::Float64, δ::Float64)
     @assert(δ >= 0)
     MAX_ITERATION = problem.MAX_ITERATION
     MAX_TIME = problem.MAX_TIME
