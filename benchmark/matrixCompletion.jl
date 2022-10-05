@@ -393,12 +393,3 @@ function solveMatrixCompletionMultipleTimes(
 	computeCI(folder_name, all_instances_results)
 	@show paper_results
 end
-
-# folder_name = "/Users/fah33/PhD_Research/CAT/benchmark"
-# max_it = 10000
-# max_time = 30 * 60.0
-# tol_opt = 1e-5
-# λ_1 = 0.001
-# λ_2 = 0.001
-# instances = 10
-# solveMatrixCompletionMultipleTimes(folder_name, max_it, max_time, tol_opt, λ_1, λ_2, instances)

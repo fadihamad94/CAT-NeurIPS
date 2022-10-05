@@ -13,6 +13,9 @@ const OPTIMIZATION_METHOD_TRS = "GALAHAD_TRS"
 const OPTIMIZATION_METHOD_GLTR = "GALAHAD_GLTR"
 const OPTIMIZATION_METHOD_DEFAULT = "OUR_APPROACH"
 
+const LIBRARY_PATH_TRS = string(@__DIR__ ,"/../lib/trs.so")
+const LIBRARY_PATH_GLTR = string(@__DIR__ ,"../lib/gltr.so")
+
 mutable struct Subproblem_Solver_Methods
     OPTIMIZATION_METHOD_TRS::String
     OPTIMIZATION_METHOD_GLTR::String
@@ -78,7 +81,8 @@ function trs(f::Float64, g::Vector{Float64}, H, r::Float64)
     max_factorizations = 1000
 	H_dense = getHessianLowerTriangularPart(H)
 	d = zeros(length(g))
-	userdata = ccall((:trs, "/afs/pitt.edu/home/f/a/fah33/CAT/lib/trs.so"), userdata_type_trs, (Cint, Cdouble, Ref{Cdouble}, Ref{Cdouble}, Ref{Cdouble}, Cdouble, Cint, Cint), length(g), f, d, g, H_dense, r, print_level, max_factorizations)
+	full_Path = string(@__DIR__ ,"/test")
+	userdata = ccall((:trs, LIBRARY_PATH_TRS), userdata_type_trs, (Cint, Cdouble, Ref{Cdouble}, Ref{Cdouble}, Ref{Cdouble}, Cdouble, Cint, Cint), length(g), f, d, g, H_dense, r, print_level, max_factorizations)
 	if userdata.status != 0
 		throw(error("Failed to solve trust region subproblem using TRS factorization method from GALAHAD. Status is $(userdata.status)."))
 	end
@@ -90,7 +94,7 @@ function gltr(f::Float64, g::Vector{Float64}, H, r::Float64)
     iter = 100
 	H_dense = getHessianLowerTriangularPart(H)
 	d = zeros(length(g))
-	userdata = ccall((:gltr, "/afs/pitt.edu/home/f/a/fah33/CAT/lib/gltr.so"), userdata_type_gltr, (Cint, Cdouble, Ref{Cdouble}, Ref{Cdouble}, Ref{Cdouble}, Cdouble, Cint, Cint), length(g), f, d, g, H_dense, r, print_level, iter)
+	userdata = ccall((:gltr, LIBRARY_PATH_GLTR), userdata_type_gltr, (Cint, Cdouble, Ref{Cdouble}, Ref{Cdouble}, Ref{Cdouble}, Cdouble, Cint, Cint), length(g), f, d, g, H_dense, r, print_level, iter)
 	if userdata.status != 0
 		throw(error("Failed to solve trust region subproblem using GLTR iterative method from GALAHAD. Status is $(userdata.status)."))
 	end
