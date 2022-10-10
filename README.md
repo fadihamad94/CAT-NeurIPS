@@ -110,7 +110,7 @@ $ julia --project=scripts scripts/solve_learning_problem.jl --output_dir ./scrip
 ## Matrix completion problem
 
 ```shell
-$ julia --project=scripts scripts/solve_matrix_completion.jl --output_dir ./scripts/benchmark/results/matrix_completion --λ1 0.01 --λ2 0.01 --instances 10
+$ julia --project=scripts scripts/solve_matrix_completion.jl --output_dir ./scripts/benchmark/results/matrix_completion --λ_1 0.01 --λ_2 0.01 --instances 10
 ```
 
 ### CUTEst test set
