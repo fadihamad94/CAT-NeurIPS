@@ -1,7 +1,6 @@
 using JuMP, NLPModels, NLPModelsJuMP, Random, Distributions, LinearAlgebra, Test, Optim, DataFrames, StatsBase, CSV
 include("../src/CAT.jl")
-include("../src/tru.jl")
-include("../src/arc.jl")
+
 Random.seed!(0)
 const CAT_SOLVER = "CAT"
 const NEWTON_TRUST_REGION_SOLVER = "NewtonTrustRegion"
