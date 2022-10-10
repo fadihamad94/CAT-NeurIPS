@@ -9,12 +9,6 @@ const optimization_method_CAT = "CAT"
 const optimization_method_CAT_theta_0 = "CAT_THETA_ZERO"
 const optimization_metnod_newton_trust_region = "NewtonTrustRegion"
 
-const optimization_method_CAT_galahad_factorization = "CAT_GALAHAD_FACTORIZATION"
-const optimization_method_CAT_galahad_iterative = "CAT_GALAHAD_ITERATIVE"
-const optimization_method_arc_galahad = "ARC"
-const optimization_method_tru_galahd_factorization = "TRU_GALAHAD_FACTORIZATION"
-const optimization_method_tru_galahd_iterative = "TRU_GALAHAD_ITERATIVE"
-
 function f(x::Vector)
 	obj(nlp, x)
 end
@@ -61,7 +55,7 @@ function run_cutest_with_CAT(
     if !default_problems
         cutest_problems = get_problem_list(min_nvar, max_nvar)
     end
-	trust_region_method_subproblem_solver = optimization_method == optimization_method_CAT ? consistently_adaptive_trust_region_method.OPTIMIZATION_METHOD_DEFAULT : (optimization_method == optimization_method_CAT_galahad_factorization ? consistently_adaptive_trust_region_method.OPTIMIZATION_METHOD_TRS : consistently_adaptive_trust_region_method.OPTIMIZATION_METHOD_GLTR)
+	trust_region_method_subproblem_solver = consistently_adaptive_trust_region_method.OPTIMIZATION_METHOD_DEFAULT
 	if θ == 0.0
 		optimization_method = optimization_method_CAT_theta_0
 	end
@@ -87,44 +81,6 @@ function run_cutest_with_newton_trust_region(
 	executeCUTEST_Models_benchmark(cutest_problems, folder_name, optimization_method, max_it, max_time, tol_opt, θ, β, ω, γ_2, r_1)
 end
 
-function run_cutest_with_arc(
-    folder_name::String,
-    default_problems::Bool,
-    max_it::Int64,
-    max_time::Float64,
-    tol_opt::Float64,
-    σ_1::Float64,
-    min_nvar::Int64,
-    max_nvar::Int64
-    )
-	cutest_problems = problems_paper_list
-    if !default_problems
-        cutest_problems = get_problem_list(min_nvar, max_nvar)
-    end
-    optimization_method = optimization_method_arc_galahad
-	θ = β = ω = γ_2 = 0.0
-	executeCUTEST_Models_benchmark(cutest_problems, folder_name, optimization_method, max_it, max_time, tol_opt, θ, β, ω, γ_2, σ_1)
-end
-
-function run_cutest_with_tru(
-    folder_name::String,
-    default_problems::Bool,
-    max_it::Int64,
-    max_time::Float64,
-    tol_opt::Float64,
-    r_1::Float64,
-    min_nvar::Int64,
-    max_nvar::Int64,
-	optimization_method::String
-    )
-	cutest_problems = problems_paper_list
-    if !default_problems
-        cutest_problems = get_problem_list(min_nvar, max_nvar)
-    end
-	θ = β = ω = γ_2 = 0.0
-	executeCUTEST_Models_benchmark(cutest_problems, folder_name, optimization_method, max_it, max_time, tol_opt, θ, β, ω, γ_2, r_1)
-end
-
 function runModelFromProblem(
 	cutest_problem::String,
 	folder_name::String,
@@ -144,7 +100,7 @@ function runModelFromProblem(
     try
         println("-----------EXECUTING PROBLEM----------", cutest_problem)
         nlp = CUTEstModel(cutest_problem)
-		if optimization_method == optimization_method_CAT || optimization_method == optimization_method_CAT_theta_0 || optimization_method == optimization_method_CAT_galahad_factorization || optimization_method == optimization_method_CAT_galahad_iterative
+		if optimization_method == optimization_method_CAT || optimization_method == optimization_method_CAT_theta_0
 			problem = consistently_adaptive_trust_region_method.Problem_Data(nlp, β, θ, ω, r_1, max_it, tol_opt, max_time, γ_2)
 	        x_1 = problem.nlp.meta.x0
 	        x, status, iteration_stats, computation_stats, total_iterations_count = consistently_adaptive_trust_region_method.CAT(problem, x_1, δ, trust_region_method_subproblem_solver)
@@ -162,7 +118,6 @@ function runModelFromProblem(
 			directory_name = string(folder_name, "/", "$optimization_method")
 			outputResultsToCSVFile(directory_name, cutest_problem, iteration_stats)
 			outputIterationsStatusToCSVFile(directory_name, cutest_problem, status, computation_stats_modified, total_iterations_count, optimization_method)
-			# outputHowOftenNearConvexityConditionHolds(directory_name, cutest_problem, status, optimization_method, iteration_stats)
 		elseif optimization_method == optimization_metnod_newton_trust_region
 			d = Optim.TwiceDifferentiable(f, g!, h!, nlp.meta.x0)
 			results = optimize(d, nlp.meta.x0, Optim.NewtonTrustRegion(initial_delta=r_1), Optim.Options(show_trace=false, iterations = max_it, time_limit = max_time, g_abstol = tol_opt))
@@ -178,49 +133,6 @@ function runModelFromProblem(
 			if status == "ITERATION_LIMIT"
 				total_iterations_count = max_it + 1
 			end
-			println("------------------------MODEL SOLVED WITH STATUS: ", status)
-			directory_name = string(folder_name, "/", "$optimization_method")
-			outputIterationsStatusToCSVFile(directory_name, cutest_problem, status, computation_stats, total_iterations_count, optimization_method)
-		elseif optimization_method == optimization_method_arc_galahad
-			initial_weight = r_1
-			print_level = 0
-			userdata, solution = arc(length(nlp.meta.x0), nlp.meta.x0, grad(nlp, nlp.meta.x0), print_level, max_it, initial_weight)
-			status = userdata.status == 0 ? "OPTIMAL" : (userdata.status == -18 ? "ITERATION_LIMIT" : "FAILURE")
-			iter = userdata.iter
-			total_iterations_count = iter
-			total_function_evaluation = userdata.total_function_evaluation
-			total_gradient_evaluation = userdata.total_gradient_evaluation
-			total_hessian_evaluation = userdata.total_hessian_evaluation
-			function_value = obj(nlp, solution)
-			graient_value = norm(grad(nlp, solution), 2)
-			if status != 0 || graient_value > tol_opt
-				iter = max_it + 1
-				total_function_evaluation = max_it + 1
-				total_gradient_evaluation = max_it + 1
-			end
-			computation_stats = Dict("total_function_evaluation" => total_function_evaluation, "total_gradient_evaluation" => total_gradient_evaluation, "total_hessian_evaluation" => total_hessian_evaluation, "function_value" => function_value, "gradient_value" => graient_value)
-			println("------------------------MODEL SOLVED WITH STATUS: ", status)
-			directory_name = string(folder_name, "/", "$optimization_method")
-			outputIterationsStatusToCSVFile(directory_name, cutest_problem, status, computation_stats, total_iterations_count, optimization_method)
-		elseif optimization_method == optimization_method_tru_galahd_factorization || optimization_method == optimization_method_tru_galahd_iterative
-			subproblem_direct = optimization_method == optimization_method_tru_galahd_factorization ? true : false
-			initial_x = nlp.meta.x0
-			print_level = 0
-			userdata, solution = tru(length(initial_x), initial_x, grad(nlp, initial_x), print_level, max_it, r_1, subproblem_direct)
-			status = userdata.status == 0 ? "OPTIMAL" : (userdata.status == -18 ? "ITERATION_LIMIT" : "FAILURE")
-			iter = userdata.iter
-			total_iterations_count = iter
-			total_function_evaluation = userdata.total_function_evaluation
-			total_gradient_evaluation = userdata.total_gradient_evaluation
-			total_hessian_evaluation = userdata.total_hessian_evaluation
-			function_value = obj(nlp, solution)
-			graient_value = norm(grad(nlp, solution), 2)
-			if status != 0 || graient_value > tol_opt
-				iter = max_it + 1
-				total_function_evaluation = max_it + 1
-				total_gradient_evaluation = max_it + 1
-			end
-			computation_stats = Dict("total_function_evaluation" => total_function_evaluation, "total_gradient_evaluation" => total_gradient_evaluation, "total_hessian_evaluation" => total_hessian_evaluation, "function_value" => function_value, "gradient_value" => graient_value)
 			println("------------------------MODEL SOLVED WITH STATUS: ", status)
 			directory_name = string(folder_name, "/", "$optimization_method")
 			outputIterationsStatusToCSVFile(directory_name, cutest_problem, status, computation_stats, total_iterations_count, optimization_method)
@@ -257,14 +169,6 @@ function executeCUTEST_Models_benchmark(
 		write(iteration_status_csv_file, "problem_name,status,total_iterations_count,function_value,graient_value,total_function_evaluation,total_gradient_evaluation,total_hessian_evaluation\n");
     end
 
-	# if occursin(optimization_method_CAT, optimization_method)
-	# 	near_convexity_rate_csv_file_name = "table_near_convexity_rate_$optimization_method.csv"
-	# 	near_convexity_rate_csv_file_path = string(total_results_output_directory, "/", near_convexity_rate_csv_file_name)
-	# 	open(near_convexity_rate_csv_file_path,"a") do near_convexity_rate_csv_file
-	# 		write(near_convexity_rate_csv_file, "problem_name,status,rate\n");
-	#     end
-	# end
-
 	for problem in cutest_problems
         runModelFromProblem(problem, folder_name, optimization_method, max_it, max_time, tol_opt, θ, β, ω, γ_2, r_1, δ, trust_region_method_subproblem_solver)
     end
@@ -294,46 +198,3 @@ function outputIterationsStatusToCSVFile(
 		write(iteration_status_csv_file, "$cutest_problem,$status,$total_iterations_count,$function_value,$gradient_value,$total_function_evaluation,$total_gradient_evaluation,$total_hessian_evaluation\n")
     end
 end
-
-# function outputHowOftenNearConvexityConditionHolds(directory_name::String,
-# 	cutest_problem::String,
-# 	status::String,
-# 	optimization_method::String,
-# 	iteration_stats::DataFrame
-# 	)
-# 	numberOfRow = size(iteration_stats)[1]
-# 	numberOfCol = size(iteration_stats)[2]
-# 	count = 0
-# 	theta = 1.0
-#     # theta = 10.0
-# 	for k in 1:numberOfRow
-# 		f_T = last(iteration_stats, 1)[!, "fval"][1]
-# 		g_T = last(iteration_stats, 1)[!, "gradval"][1]
-# 		x_T = last(iteration_stats, 1)[!, "x"][1]
-#
-# 		f_k = iteration_stats[k,"fval"]
-# 		x_k = iteration_stats[k,"x"]
-# 		g_k = grad(nlp, x_k)
-# 		if (f_T >= f_k + transpose(g_k) * (x_T - x_k))  && !(f_T >= f_k + theta * (transpose(g_k) * (x_T - x_k)))
-# 			@show f_T
-# 			@show f_k
-# 			@show transpose(g_k) * (x_T - x_k)
-# 			@show theta *(transpose(g_k) * (x_T - x_k))
-# 			@show f_k + transpose(g_k) * (x_T - x_k)
-# 			@show f_k + theta * (transpose(g_k) * (x_T - x_k))
-# 			throw(error("Calculation buggy"))
-# 		end
-# 		if f_T >= f_k + theta * (transpose(g_k) * (x_T - x_k))
-# 			count = count + 1
-# 		end
-# 	end
-# 	rate = 0.0
-# 	if numberOfRow > 0
-# 		rate = count / numberOfRow
-# 	end
-# 	near_convexity_rate_csv_file_name = "table_near_convexity_rate_$optimization_method.csv"
-# 	near_convexity_rate_csv_file_path = string(directory_name, "/", near_convexity_rate_csv_file_name)
-# 	open(near_convexity_rate_csv_file_path,"a") do near_convexity_rate_csv_file
-# 		write(near_convexity_rate_csv_file, "$cutest_problem,$status,$rate\n")
-#     end
-# end

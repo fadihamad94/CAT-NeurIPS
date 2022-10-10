@@ -28,7 +28,7 @@ function parse_command_line()
     required = true
 
     "--solver"
-    help = "The optimization method to use, must be `CAT`, `CAT_GALAHAD_FACTORIZATION`, `CAT_GALAHAD_ITERATIVE`, `NewtonTrustRegion`, `ARC`, `TRU_GALAHAD_FACTORIZATION`, or `TRU_GALAHAD_ITERATIVE`."
+    help = "The optimization method to use, must be `CAT` or `NewtonTrustRegion`."
     arg_type = String
     required = true
 
@@ -108,7 +108,7 @@ function main()
   tol_opt = parsed_args["tol_opt"]
   r_1 = parsed_args["r_1"]
 
-  if parsed_args["solver"] == "CAT" || parsed_args["solver"] == "CAT_GALAHAD_FACTORIZATION" || parsed_args["solver"] == "CAT_GALAHAD_ITERATIVE"
+  if parsed_args["solver"] == "CAT"
     θ = parsed_args["θ"]
     β = parsed_args["β"]
     ω = parsed_args["ω"]
@@ -117,12 +117,8 @@ function main()
     run_cutest_with_CAT(folder_name, default_problems, max_it, max_time, tol_opt, θ, β, ω, γ_2, r_1, δ, min_nvar, max_nvar, parsed_args["solver"])
   elseif parsed_args["solver"] == "NewtonTrustRegion"
     run_cutest_with_newton_trust_region(folder_name, default_problems, max_it, max_time, tol_opt, r_1, min_nvar, max_nvar)
-  elseif parsed_args["solver"] == "ARC"
-    run_cutest_with_arc(folder_name, default_problems, max_it, max_time, tol_opt, r_1, min_nvar, max_nvar)
-  elseif parsed_args["solver"] == "TRU_GALAHAD_FACTORIZATION" || parsed_args["solver"] == "TRU_GALAHAD_ITERATIVE"
-    run_cutest_with_tru(folder_name, default_problems, max_it, max_time, tol_opt, r_1, min_nvar, max_nvar, parsed_args["solver"])
   else
-    error("`solver` arg must be `CAT`, `CAT_GALAHAD_FACTORIZATION`, `CAT_GALAHAD_ITERATIVE`, `NewtonTrustRegion`, `ARC`, `TRU_GALAHAD_FACTORIZATION`, or `TRU_GALAHAD_ITERATIVE`.")
+    error("`solver` arg must be `CAT` or `NewtonTrustRegion`.")
   end
 end
 

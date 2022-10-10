@@ -9,46 +9,16 @@ H + δ I ≥ 0
 That is why we defined the below phi to solve that using bisection logic.
 =#
 
-const OPTIMIZATION_METHOD_TRS = "GALAHAD_TRS"
-const OPTIMIZATION_METHOD_GLTR = "GALAHAD_GLTR"
 const OPTIMIZATION_METHOD_DEFAULT = "OUR_APPROACH"
 
-const LIBRARY_PATH_TRS = string(@__DIR__ ,"/../lib/trs.so")
-const LIBRARY_PATH_GLTR = string(@__DIR__ ,"../lib/gltr.so")
-
 mutable struct Subproblem_Solver_Methods
-    OPTIMIZATION_METHOD_TRS::String
-    OPTIMIZATION_METHOD_GLTR::String
     OPTIMIZATION_METHOD_DEFAULT::String
     function Subproblem_Solver_Methods()
-        return new(OPTIMIZATION_METHOD_TRS, OPTIMIZATION_METHOD_GLTR, OPTIMIZATION_METHOD_DEFAULT)
+        return new(OPTIMIZATION_METHOD_DEFAULT)
     end
 end
 
 const subproblem_solver_methods = Subproblem_Solver_Methods()
-
-#Data returned by calling the GALAHAD library in case we solve trust region subproblem
-#using their factorization approach
-struct userdata_type_trs
-	status::Cint
-	factorizations::Cint
-	obj::Cdouble
-	solution::Ptr{Cdouble}
-	hard_case::Cuchar
-	multiplier::Cdouble
-	x_norm::Cdouble
-end
-
-#Data returned by calling the GALAHAD library in case we solve trust region subproblem
-#using their GLTR approach
-struct userdata_type_gltr
-	status::Cint
-	iter::Cint
-	obj::Cdouble
-	hard_case::Cuchar
-	multiplier::Cdouble
-	mnormx::Cdouble
-end
 
 function getHessianLowerTriangularPart(H)
 	h_vec = Vector{Float64}()
@@ -65,40 +35,7 @@ function solveTrustRegionSubproblem(f::Float64, g::Vector{Float64}, H, x_k::Vect
 		return optimizeSecondOrderModel(g, H, δ, ϵ, r)
 	end
 
-	if subproblem_solver_method == OPTIMIZATION_METHOD_TRS
-		return trs(f, g, H, r)
-	end
-
-	if subproblem_solver_method == OPTIMIZATION_METHOD_GLTR
-		return gltr(f, g, H, r)
-	end
-
 	return optimizeSecondOrderModel(g, H, δ, ϵ, r)
-end
-
-function trs(f::Float64, g::Vector{Float64}, H, r::Float64)
-	print_level = 0
-    max_factorizations = 1000
-	H_dense = getHessianLowerTriangularPart(H)
-	d = zeros(length(g))
-	full_Path = string(@__DIR__ ,"/test")
-	userdata = ccall((:trs, LIBRARY_PATH_TRS), userdata_type_trs, (Cint, Cdouble, Ref{Cdouble}, Ref{Cdouble}, Ref{Cdouble}, Cdouble, Cint, Cint), length(g), f, d, g, H_dense, r, print_level, max_factorizations)
-	if userdata.status != 0
-		throw(error("Failed to solve trust region subproblem using TRS factorization method from GALAHAD. Status is $(userdata.status)."))
-	end
-	return userdata.multiplier, d
-end
-
-function gltr(f::Float64, g::Vector{Float64}, H, r::Float64)
-	print_level = 0
-    iter = 100
-	H_dense = getHessianLowerTriangularPart(H)
-	d = zeros(length(g))
-	userdata = ccall((:gltr, LIBRARY_PATH_GLTR), userdata_type_gltr, (Cint, Cdouble, Ref{Cdouble}, Ref{Cdouble}, Ref{Cdouble}, Cdouble, Cint, Cint), length(g), f, d, g, H_dense, r, print_level, iter)
-	if userdata.status != 0
-		throw(error("Failed to solve trust region subproblem using GLTR iterative method from GALAHAD. Status is $(userdata.status)."))
-	end
-	return userdata.multiplier, d
 end
 
 #Based on Theorem 4.3 in Numerical Optimization by Wright
