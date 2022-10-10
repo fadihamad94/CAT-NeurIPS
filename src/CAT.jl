@@ -81,7 +81,7 @@ function CAT(problem::Problem_Data, x::Vector{Float64}, δ::Float64, subproblem_
         end
         start_time = time()
         while k <= MAX_ITERATION
-            @show "Iteration $k, $(norm(gval_current, 2))"
+            #@show "Iteration $k, $(norm(gval_current, 2))"
             if compute_hessian
                 hessian_current = restoreFullMatrix(hess(nlp, x_k))
                 total_hessian_evaluation += 1
