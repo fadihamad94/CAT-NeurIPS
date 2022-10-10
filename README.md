@@ -97,6 +97,9 @@ $ julia --project=scripts scripts/solve_hard_example.jl --output_dir ./scripts/b
 $ julia --project=scripts scripts/plot_CUTEst_results.jl --output_dir ./scripts/benchmark/results/cutest
 ```
 
+## Experimental results
+The full tables of results can be found under the results directory
+
 ## Instructions for reproducing our experiments
 ### Learning linear dynamical systems
 
