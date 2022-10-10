@@ -14,6 +14,9 @@ Validate setup by running the unit tests:
 $ julia --project=scripts test/run_tests.jl
 ```
 
+## Experimental results
+The full tables of results can be found under the results directory
+
 ## Running
 ### Learning linear dynamical systems
 To test our solver on learning linear dynamical system, please use the script:
@@ -96,9 +99,6 @@ $ julia --project=scripts scripts/solve_hard_example.jl --output_dir ./scripts/b
 ```shell
 $ julia --project=scripts scripts/plot_CUTEst_results.jl --output_dir ./scripts/benchmark/results/cutest
 ```
-
-## Experimental results
-The full tables of results can be found under the results directory
 
 ## Instructions for reproducing our experiments
 ### Learning linear dynamical systems
