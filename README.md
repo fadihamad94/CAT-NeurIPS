@@ -53,7 +53,7 @@ $ julia --project=scripts scripts/solve_matrix_completion.jl --help
 Here is a simple example:
 
 ```shell
-$ julia --project=scripts scripts/solve_matrix_completion.jl --output_dir ./scripts/benchmark/results/matrix_completion --λ1 0.001 --λ2 0.001 --instances 5
+$ julia --project=scripts scripts/solve_matrix_completion.jl --output_dir ./scripts/benchmark/results/matrix_completion --λ_1 0.001 --λ_2 0.001 --instances 5
 ```
 
 ### CUTEst test set
