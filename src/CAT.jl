@@ -5,7 +5,7 @@ using NLPModels, LinearAlgebra, DataFrames, SparseArrays
 include("./trust_region_subproblem_solver.jl")
 
 export Problem_Data
-export phi, findinterval, bisection, restoreFullMatrix, computeSecondOrderModel, optimizeSecondOrderModel, compute_ρ, CAT
+export phi, findinterval, bisection, computeSecondOrderModel, optimizeSecondOrderModel, compute_ρ, CAT
 
 mutable struct Problem_Data
     nlp::AbstractNLPModel
@@ -46,7 +46,7 @@ function compute_ρ(fval_current::Float64, fval_next::Float64, gval_current::Vec
     return ρ
 end
 
-function CAT(problem::Problem_Data, x::Vector{Float64}, δ::Float64, subproblem_solver_method::String=subproblem_solver_methods.OPTIMIZATION_METHOD_DEFAULT)
+function CAT(problem::Problem_Data, x::Vector{Float64}, δ::Float64, verbose::Bool=false)
     @assert(δ >= 0)
     MAX_ITERATION = problem.MAX_ITERATION
     MAX_TIME = problem.MAX_TIME
@@ -75,7 +75,9 @@ function CAT(problem::Problem_Data, x::Vector{Float64}, δ::Float64, subproblem_
 
         if norm(gval_current, 2) <= gradient_termination_tolerance
             computation_stats = Dict("total_function_evaluation" => total_function_evaluation, "total_gradient_evaluation" => total_gradient_evaluation, "total_hessian_evaluation" => total_hessian_evaluation)
-            println("*********************************Iteration Count: ", 1)
+            if verbose
+                println("*********************************Iteration Count: ", 1)
+            end
             push!(iteration_stats, (1, δ, [], fval_current, norm(gval_current, 2)))
             return x_k, "SUCCESS", iteration_stats, computation_stats, 1
         end
@@ -83,10 +85,10 @@ function CAT(problem::Problem_Data, x::Vector{Float64}, δ::Float64, subproblem_
         while k <= MAX_ITERATION
             #@show "Iteration $k, $(norm(gval_current, 2))"
             if compute_hessian
-                hessian_current = restoreFullMatrix(hess(nlp, x_k))
+                hessian_current = hess(nlp, x_k)
                 total_hessian_evaluation += 1
             end
-            δ_k, d_k = solveTrustRegionSubproblem(fval_current, gval_current, hessian_current, x_k, δ_k, γ_2, r_k, subproblem_solver_method)
+            δ_k, d_k = solveTrustRegionSubproblem(fval_current, gval_current, hessian_current, x_k, δ_k, γ_2, r_k)
             fval_next = obj(nlp, x_k + d_k)
             total_function_evaluation += 1
             gval_next = grad(nlp, x_k + d_k)
@@ -99,7 +101,6 @@ function CAT(problem::Problem_Data, x::Vector{Float64}, δ::Float64, subproblem_
                 gval_current = gval_next
                 compute_hessian = true
             else
-                #else x_k+1 = x_k, fval_current, gval_current, hessian_current will not change
                 compute_hessian = false
             end
             if ρ_k <= β
@@ -111,7 +112,9 @@ function CAT(problem::Problem_Data, x::Vector{Float64}, δ::Float64, subproblem_
             if norm(gval_next, 2) <= gradient_termination_tolerance
                 push!(iteration_stats, (k, δ_k, d_k, fval_next, norm(gval_next, 2)))
                 computation_stats = Dict("total_function_evaluation" => total_function_evaluation, "total_gradient_evaluation" => total_gradient_evaluation, "total_hessian_evaluation" => total_hessian_evaluation)
-                println("*********************************Iteration Count: ", k)
+                if verbose
+                    println("*********************************Iteration Count: ", k)
+                end
                 return x_k, "SUCCESS", iteration_stats, computation_stats, k
             end
 

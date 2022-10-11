@@ -1,14 +1,14 @@
 using Test, NLPModels, NLPModelsJuMP, JuMP, LinearAlgebra, DataFrames, SparseArrays
 
 include("../src/CAT.jl")
-include("./test_TRS_solver.jl")
+include("./create_tests.jl")
 
 function test_phi_negative_one()
     problem = test_create_dummy_problem()
     nlp = problem.nlp
     x_k = [0.0, 0.0]
     g = grad(nlp, x_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     δ = 0.0
     ϵ = 0.8
     r = 0.2
@@ -20,7 +20,7 @@ function test_phi_zero()
     nlp = problem.nlp
     x_k = nlp.meta.x0
     g = grad(nlp, x_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     δ = 0.0
     ϵ = 0.8
     r = 0.4
@@ -32,7 +32,7 @@ function test_phi_positive_one()
     nlp = problem.nlp
     x_k = nlp.meta.x0
     g = grad(nlp, x_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     δ = 0.0
     ϵ = 0.8
     r = problem.r_1
@@ -44,7 +44,7 @@ function test_find_interval_with_both_phi_zero_starting_from_phi_zero()
     nlp = problem.nlp
     x_k = nlp.meta.x0
     g = grad(nlp, x_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     δ = 0.0
     ϵ = 0.8
     r = 0.2
@@ -59,7 +59,7 @@ function test_find_interval_with_both_phi_0_starting_from_phi_negative_one()
     nlp = problem.nlp
     x_k = [0.0, 0.0]
     g = grad(nlp, x_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     δ = 0.0
     ϵ = 0.8
     r = 0.2
@@ -74,7 +74,7 @@ function test_find_interval_with_both_phi_0_starting_from_phi_positive_one()
     nlp = problem.nlp
     x_k = [0.0, 0.0]
     g = grad(nlp, x_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     δ = 9.0
     ϵ = 0.8
     r = 0.2
@@ -89,7 +89,7 @@ function test_find_interval_with_phi_δ_positive_one_phi_δ_prime_negative_one()
     nlp = problem.nlp
     x_k = [0.0, 1.0]
     g = grad(nlp, x_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     δ = 250.0
     ϵ = 0.8
     r = 0.3
@@ -104,7 +104,7 @@ function test_bisection_with_starting_on_root_δ_zero()
     nlp = problem.nlp
     x_k = nlp.meta.x0
     g = grad(nlp, x_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     δ = 64.0
     ϵ = 0.8
     r = 0.2
@@ -122,7 +122,7 @@ function test_bisection_with_starting_on_root_δ_not_zero()
     nlp = problem.nlp
     x_k = [0.0, 0.0]
     g = grad(nlp, x_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     δ = 0.0
     ϵ = 0.8
     r = 0.2
@@ -139,7 +139,7 @@ function test_bisection_with_starting_from_negative_one_and_positive_one()
     nlp = problem.nlp
     x_k = [0.0, 1.0]
     g = grad(nlp, x_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     δ = 250.0
     ϵ = 0.8
     r = 0.3
@@ -182,7 +182,7 @@ function test_compute_second_order_model_negative_direction()
     nlp = problem.nlp
     function_value = obj(nlp, x_k)
     gradient_value = grad(nlp, x_k)
-    hessian_value = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    hessian_value = hess(nlp, x_k)
     second_order_model_value = consistently_adaptive_trust_region_method.computeSecondOrderModel(function_value, gradient_value, hessian_value, d_k)
     @test second_order_model_value == 104.0
 end
@@ -194,7 +194,7 @@ function test_compute_second_order_model_zero_direction()
     nlp = problem.nlp
     function_value = obj(nlp, x_k)
     gradient_value = grad(nlp, x_k)
-    hessian_value = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    hessian_value = hess(nlp, x_k)
     second_order_model_value = consistently_adaptive_trust_region_method.computeSecondOrderModel(function_value, gradient_value, hessian_value, d_k)
     @test second_order_model_value == 1.0
 end
@@ -206,7 +206,7 @@ function test_compute_second_order_model_positive_direction()
     nlp = problem.nlp
     function_value = obj(nlp, x_k)
     gradient_value = grad(nlp, x_k)
-    hessian_value = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    hessian_value = hess(nlp, x_k)
     second_order_model_value = consistently_adaptive_trust_region_method.computeSecondOrderModel(function_value, gradient_value, hessian_value, d_k)
     @test second_order_model_value == 100.0
 end
@@ -224,7 +224,7 @@ function test_compute_ρ_δ_0_H_positive_semidefinite_starting_on_global_minimiz
     fval_next = obj(nlp, x_k + d_k)
     gval_current = grad(nlp, x_k)
     gval_next = grad(nlp, x_k + d_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     ρ = consistently_adaptive_trust_region_method.compute_ρ(fval_current, fval_next, gval_current, gval_next, H, x_k, d_k, θ)
 end
 
@@ -242,7 +242,7 @@ function test_compute_ρ_phi_zero()
     fval_next = obj(nlp, x_k + d_k)
     gval_current = grad(nlp, x_k)
     gval_next = grad(nlp, x_k + d_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     ρ = consistently_adaptive_trust_region_method.compute_ρ(fval_current, fval_next, gval_current, gval_next, H, x_k, d_k, θ)
     @test norm(ρ - 0.980423689675886, 2) <= tol
 end
@@ -261,7 +261,7 @@ function test_compute_ρ_phi_δ_positive_phi_δ_prime_negative()
     fval_next = obj(nlp, x_k + d_k)
     gval_current = grad(nlp, x_k)
     gval_next = grad(nlp, x_k + d_k)
-    H = consistently_adaptive_trust_region_method.restoreFullMatrix(hess(nlp, x_k))
+    H = hess(nlp, x_k)
     ρ = consistently_adaptive_trust_region_method.compute_ρ(fval_current, fval_next, gval_current, gval_next, H, x_k, d_k, θ)
     @test norm(ρ - 0.802338318969011, 2) <= tol
 end
@@ -282,12 +282,6 @@ function unit_tests()
     test_bisection_with_starting_on_root_δ_zero()
     test_bisection_with_starting_on_root_δ_not_zero()
     test_bisection_with_starting_from_negative_one_and_positive_one()
-
-    #Unit test for restore full matrix function
-    # test_restore_full_matrix_two_by_two()
-    # test_restore_full_matrix_three_by_three()
-    # test_restore_full_matrix_four_by_four()
-    # test_restore_full_matrix_diagonal_matrix()
 
     #Unit test compute second order model function
     test_compute_second_order_model_negative_direction()
@@ -490,7 +484,6 @@ function optimize_models()
     # println()
     solveNLPSinCosModel2()
 end
-
 
 @testset "basic_CAT_tests" begin
     unit_tests()

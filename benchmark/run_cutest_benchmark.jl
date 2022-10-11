@@ -53,11 +53,11 @@ function run_cutest_with_CAT(
     if !default_problems
         cutest_problems = get_problem_list(min_nvar, max_nvar)
     end
-	trust_region_method_subproblem_solver = consistently_adaptive_trust_region_method.OPTIMIZATION_METHOD_DEFAULT
+
 	if θ == 0.0
 		optimization_method = optimization_method_CAT_theta_0
 	end
-	executeCUTEST_Models_benchmark(cutest_problems, folder_name, optimization_method, max_it, max_time, tol_opt, θ, β, ω, γ_2, r_1, δ, trust_region_method_subproblem_solver)
+	executeCUTEST_Models_benchmark(cutest_problems, folder_name, optimization_method, max_it, max_time, tol_opt, θ, β, ω, γ_2, r_1, δ)
 end
 
 function run_cutest_with_newton_trust_region(
@@ -91,8 +91,7 @@ function runModelFromProblem(
 	ω::Float64,
     γ_2::Float64,
     r_1::Float64,
-	δ::Float64,
-	trust_region_method_subproblem_solver::String=consistently_adaptive_trust_region_method.OPTIMIZATION_METHOD_DEFAULT
+	δ::Float64
 	)
     global nlp = nothing
     try
@@ -101,7 +100,7 @@ function runModelFromProblem(
 		if optimization_method == optimization_method_CAT || optimization_method == optimization_method_CAT_theta_0
 			problem = consistently_adaptive_trust_region_method.Problem_Data(nlp, β, θ, ω, r_1, max_it, tol_opt, max_time, γ_2)
 	        x_1 = problem.nlp.meta.x0
-	        x, status, iteration_stats, computation_stats, total_iterations_count = consistently_adaptive_trust_region_method.CAT(problem, x_1, δ, trust_region_method_subproblem_solver)
+	        x, status, iteration_stats, computation_stats, total_iterations_count = consistently_adaptive_trust_region_method.CAT(problem, x_1, δ)
 			function_value = NaN
 			gradient_value = NaN
 			if size(last(iteration_stats, 1))[1] > 0
@@ -154,8 +153,7 @@ function executeCUTEST_Models_benchmark(
 	ω::Float64=8.0,
     γ_2::Float64=0.8,
     r_1::Float64=1.0,
-	δ::Float64=0.0,
-	trust_region_method_subproblem_solver::String=consistently_adaptive_trust_region_method.OPTIMIZATION_METHOD_DEFAULT
+	δ::Float64=0.0
 	)
 
 	total_results_output_directory =  string(folder_name, "/$optimization_method")
@@ -168,7 +166,7 @@ function executeCUTEST_Models_benchmark(
     end
 
 	for problem in cutest_problems
-        runModelFromProblem(problem, folder_name, optimization_method, max_it, max_time, tol_opt, θ, β, ω, γ_2, r_1, δ, trust_region_method_subproblem_solver)
+        runModelFromProblem(problem, folder_name, optimization_method, max_it, max_time, tol_opt, θ, β, ω, γ_2, r_1, δ)
     end
 end
 

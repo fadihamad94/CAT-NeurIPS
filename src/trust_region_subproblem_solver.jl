@@ -1,4 +1,4 @@
-export phi, findinterval, bisection, restoreFullMatrix
+export phi, findinterval, bisection
 #=
 The big picture idea here is to optimize the trust region subproblem using a factorization method based
 on the optimality conditions:
@@ -8,17 +8,6 @@ H + δ I ≥ 0
 
 That is why we defined the below phi to solve that using bisection logic.
 =#
-
-const OPTIMIZATION_METHOD_DEFAULT = "OUR_APPROACH"
-
-mutable struct Subproblem_Solver_Methods
-    OPTIMIZATION_METHOD_DEFAULT::String
-    function Subproblem_Solver_Methods()
-        return new(OPTIMIZATION_METHOD_DEFAULT)
-    end
-end
-
-const subproblem_solver_methods = Subproblem_Solver_Methods()
 
 function getHessianLowerTriangularPart(H)
 	h_vec = Vector{Float64}()
@@ -30,11 +19,7 @@ function getHessianLowerTriangularPart(H)
 	return h_vec
 end
 
-function solveTrustRegionSubproblem(f::Float64, g::Vector{Float64}, H, x_k::Vector{Float64}, δ::Float64, ϵ::Float64, r::Float64, subproblem_solver_method::String=subproblem_solver_methods.OPTIMIZATION_METHOD_DEFAULT)
-	if subproblem_solver_method == OPTIMIZATION_METHOD_DEFAULT
-		return optimizeSecondOrderModel(g, H, δ, ϵ, r)
-	end
-
+function solveTrustRegionSubproblem(f::Float64, g::Vector{Float64}, H, x_k::Vector{Float64}, δ::Float64, ϵ::Float64, r::Float64)
 	return optimizeSecondOrderModel(g, H, δ, ϵ, r)
 end
 
@@ -169,7 +154,7 @@ function bisection(g::Vector{Float64}, H, δ::Float64, ϵ::Float64, δ_prime::Fl
     return δ_m
 end
 
-#Based on 'THE HARD CASE' section from Numerical Optimization by Wright
+#Based on 'THE HARD CASE' section from Numerical Optimization by Nocedal and Wright
 function solveHardCaseLogic(g::Vector{Float64}, H, r::Float64)
     minimumEigenValue = eigmin(Matrix(H))
     δ = -minimumEigenValue
@@ -201,16 +186,4 @@ function solveHardCaseLogic(g::Vector{Float64}, H, r::Float64)
     end
 
     return δ, d_k
-end
-
-function restoreFullMatrix(A)
-	#Old NLPModelsJuMP package used to return only a lower traingular matrix
-    # nmbRows = size(A)[1]
-    # numbColumns = size(A)[2]
-    # for i in 1:nmbRows
-    #     for j in i:numbColumns
-    #         A[i, j] = A[j, i]
-    #     end
-    # end
-    return A
 end
