@@ -1,4 +1,4 @@
-Please use the latest enhanced version of [CAT](https://github.com/fadihamad94/CAT-Journal/tree/master) based on our recent paper  ["A simple and practical adaptive trust-region method."](https://arxiv.org/submit/6040708/view)
+Please use the latest enhanced version of [CAT](https://github.com/fadihamad94/CAT-Journal/tree/master) based on our recent paper  ["A simple and practical adaptive trust-region method."](https://arxiv.org/abs/2412.02079)
 
 # CAT
 This package is the implementation of a **c**onsistently **a**daptive **t**rust-region method (called CAT) for finding stationary points of nonconvex functions with L-Lipschitz Hessians and bounded optimality gap.
